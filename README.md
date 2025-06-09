@@ -28,6 +28,25 @@
 - **PWA対応**: オフラインでも使用可能
 - **プライバシー保護**: すべての処理がブラウザ内で完結
 
+## 📁 プロジェクト構造
+
+```
+web_app_processing_image/
+├── index.html              # メインHTMLファイル
+├── script.js              # メインJavaScriptファイル（34KB）
+├── styles.css             # CSSスタイルファイル（8.8KB）
+├── manifest.json          # PWAマニフェスト
+├── service-worker.js      # Service Workerファイル
+├── package.json           # npmプロジェクト設定
+├── package-lock.json      # npm依存関係ロック
+├── .eslintrc.json         # ESLint設定
+├── .gitignore            # Git除外ファイル設定
+├── .github/
+│   └── workflows/
+│       └── deploy.yml     # GitHub Actions設定
+└── README.md             # このファイル
+```
+
 ## 🚀 使い方
 
 1. **画像のアップロード**
@@ -74,8 +93,8 @@
 
 ```bash
 # リポジトリをクローン
-git clone https://github.com/yourusername/image-resizer-web-app.git
-cd image-resizer-web-app
+git clone <repository-url>
+cd web_app_processing_image
 
 # 依存関係をインストール
 npm install
@@ -105,13 +124,6 @@ npm run lint
 npm run lint:fix
 ```
 
-### HTMLバリデーション
-
-```bash
-# HTMLの妥当性をチェック
-npm run validate-html
-```
-
 ## 🔧 CI/CD
 
 このプロジェクトはGitHub Actionsを使用してCI/CDパイプラインを設定しています。
@@ -120,7 +132,6 @@ npm run validate-html
 
 1. **コード品質チェック**
    - ESLintによるJavaScriptのリンティング
-   - HTML5バリデーション
    - テストの実行
 
 2. **自動デプロイ**
@@ -141,27 +152,9 @@ npm run validate-html
 - **インストール可能**: ホーム画面への追加が可能
 - **ネイティブアプリ風のUX**: フルスクリーン表示
 
-## 🌐 対応ブラウザ
+## 📦 主要な技術・ライブラリ
 
-- Chrome 80+
-- Firefox 75+
-- Safari 13+
-- Edge 80+
-
-## 📄 ライセンス
-
-MIT License - 詳細は[LICENSE](LICENSE)ファイルを参照してください。
-
-## 🤝 コントリビューション
-
-プルリクエストやイシューの報告を歓迎します！
-
-1. フォークする
-2. 機能ブランチを作成 (`git checkout -b feature/amazing-feature`)
-3. 変更をコミット (`git commit -m 'Add amazing feature'`)
-4. ブランチにプッシュ (`git push origin feature/amazing-feature`)
-5. プルリクエストを開く
-
-## 📞 サポート
-
-質問や問題がありましたら、[Issues](https://github.com/yourusername/image-resizer-web-app/issues)までお気軽にお寄せください。 
+- **フロントエンド**: HTML5, CSS3, Vanilla JavaScript
+- **AI背景除去**: MediaPipe Selfie Segmentation
+- **PWA**: Service Worker, Web App Manifest
+- **開発ツール**: ESLint, live-server
