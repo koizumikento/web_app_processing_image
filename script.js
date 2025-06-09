@@ -23,8 +23,9 @@ class ImageProcessor {
         this.selfieSegmentation = null;
         this.segmentationResults = null;
         
-        this.initializeEventListeners();
+        // 初期タブ状態を即座に設定
         this.initializeTabsFromURL();
+        this.initializeEventListeners();
     }
 
     initializeEventListeners() {
@@ -114,8 +115,32 @@ class ImageProcessor {
     initializeTabsFromURL() {
         const urlParams = new URLSearchParams(window.location.search);
         const tab = urlParams.get('tab');
-        if (tab && (tab === 'resize' || tab === 'convert' || tab === 'background')) {
-            this.switchTab(tab);
+        
+        // URLにタブパラメータがある場合はそれを使用、なければデフォルトでresizeタブ
+        const targetTab = (tab && (tab === 'resize' || tab === 'convert' || tab === 'background')) ? tab : 'resize';
+        
+        // 即座にタブ状態を設定（アニメーションなし）
+        this.setTabState(targetTab);
+        this.currentTab = targetTab;
+    }
+
+    setTabState(tabName) {
+        // タブボタンの状態更新
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.tab === tabName) {
+                btn.classList.add('active');
+            }
+        });
+
+        // タブコンテンツの表示切り替え
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        
+        const targetContent = document.getElementById(tabName + 'Tab');
+        if (targetContent) {
+            targetContent.classList.add('active');
         }
     }
 
@@ -221,20 +246,8 @@ class ImageProcessor {
     }
 
     switchTab(tabName) {
-        // タブボタンの状態更新
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.dataset.tab === tabName) {
-                btn.classList.add('active');
-            }
-        });
-
-        // タブコンテンツの表示切り替え
-        document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.remove('active');
-        });
-        document.getElementById(tabName + 'Tab').classList.add('active');
-
+        // タブ状態を設定
+        this.setTabState(tabName);
         this.currentTab = tabName;
 
         // URLクエリパラメータを更新
@@ -771,10 +784,44 @@ class ImageProcessor {
     }
 }
 
+// CSSの読み込み完了を確認してからアプリケーションを初期化
+function waitForStyles() {
+    return new Promise((resolve) => {
+        // CSSが存在するかチェック
+        const link = document.querySelector('link[href="styles.css"]');
+        if (!link) {
+            resolve();
+            return;
+        }
+
+        // CSSファイルが完全に読み込まれているかチェック
+        if (link.sheet && link.sheet.cssRules) {
+            resolve();
+        } else {
+            link.addEventListener('load', resolve);
+            // タイムアウト設定（3秒）
+            setTimeout(resolve, 3000);
+        }
+    });
+}
+
+// アプリケーション初期化
+async function initializeImageProcessor() {
+    // CSSの読み込み完了を待つ
+    await waitForStyles();
+    
+    // 少し待機してからImageProcessorを初期化
+    setTimeout(() => {
+        new ImageProcessor();
+    }, 100);
+}
+
 // アプリケーションの初期化
-document.addEventListener('DOMContentLoaded', () => {
-    new ImageProcessor();
-});
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeImageProcessor);
+} else {
+    initializeImageProcessor();
+}
 
 // PWA対応（Service Worker）
 if ('serviceWorker' in navigator) {

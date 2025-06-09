@@ -1,7 +1,7 @@
 {
-    "name": "画像リサイズツール",
-    "short_name": "ImageResizer",
-    "description": "ブラウザ上で簡単に画像をリサイズできるツール",
+    "name": "ブラウザ動作する画像処理ツール",
+    "short_name": "ImageProcessor",
+    "description": "ブラウザ上で画像のリサイズ・形式変換・AI背景除去が可能なツール",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#667eea",

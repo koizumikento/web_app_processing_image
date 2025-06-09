@@ -1,7 +1,7 @@
 {
-  "name": "image-resizer-web-app",
+  "name": "browser-image-processing-tool",
   "version": "1.0.0",
-  "description": "ブラウザで動作する画像リサイズWebアプリケーション",
+  "description": "ブラウザで動作する画像処理Webアプリケーション（リサイズ・形式変換・AI背景除去）",
   "main": "index.html",
   "scripts": {
     "build": "npm run copy-files",

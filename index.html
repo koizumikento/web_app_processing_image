@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>画像リサイズツール</title>
+    <title>ブラウザ動作する画像処理ツール</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#667eea">
@@ -11,14 +11,14 @@
 <body>
     <div class="container">
         <header class="header">
-            <h1>🖼️ 画像リサイズツール</h1>
-            <p>ブラウザ上で簡単に画像をリサイズできます</p>
+            <h1>🖼️ ブラウザ動作する画像処理ツール</h1>
+            <p>ブラウザ上で画像のリサイズ・形式変換・AI背景除去が可能</p>
         </header>
 
         <main class="main">
             <!-- タブナビゲーション -->
             <div class="tab-navigation">
-                <button class="tab-btn active" data-tab="resize">🔄 リサイズ</button>
+                <button class="tab-btn" data-tab="resize">🔄 リサイズ</button>
                 <button class="tab-btn" data-tab="convert">🔄 形式変換</button>
                 <button class="tab-btn" data-tab="background">✂️ 背景除去</button>
             </div>
@@ -40,7 +40,7 @@
             </div>
 
             <!-- リサイズタブコンテンツ -->
-            <div class="tab-content active" id="resizeTab">
+            <div class="tab-content" id="resizeTab">
                 <div class="controls-section" id="resizeControlsSection" style="display: none;">
                     <div class="original-info">
                         <h3>元の画像</h3>
@@ -169,7 +169,7 @@
         </main>
 
         <footer class="footer">
-            <p>&copy; 2024 画像リサイズツール - すべての処理はブラウザ内で完結します</p>
+            <p>&copy; 2024 ブラウザ動作する画像処理ツール - すべての処理はブラウザ内で完結します</p>
         </footer>
     </div>
 
@@ -177,6 +177,23 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation@0.1.1675465747/selfie_segmentation.js" crossorigin="anonymous"></script>
-    <script src="script.js"></script>
+    <script>
+        // CSSが完全に読み込まれるまで待機
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                // さらにCSSの読み込みを待機
+                window.addEventListener('load', initializeApp);
+            });
+        } else {
+            window.addEventListener('load', initializeApp);
+        }
+
+        function initializeApp() {
+            // CSSが確実に適用された後でJavaScriptを読み込み
+            const script = document.createElement('script');
+            script.src = 'script.js';
+            document.head.appendChild(script);
+        }
+    </script>
 </body>
 </html> 
