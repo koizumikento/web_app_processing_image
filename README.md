@@ -140,9 +140,25 @@ npm run lint:fix
 
 ### GitHub Pagesの設定
 
-1. GitHubリポジトリの「Settings」→「Pages」
-2. Source: "GitHub Actions"を選択
-3. mainブランチにプッシュすると自動デプロイが開始されます
+このプロジェクトはGitHub Actionsを使用した自動デプロイが必要です。以下の手順で設定してください：
+
+1. **GitHubリポジトリの設定**
+   - GitHubリポジトリの「Settings」タブを開く
+   - 左サイドバーから「Pages」を選択
+
+2. **デプロイソースの変更**
+   - 「Source」セクションで **「GitHub Actions」** を選択
+   - ⚠️ **重要**: デフォルトの「Deploy from a branch」から必ず変更してください
+
+3. **設定確認**
+   - 設定が正しく保存されることを確認
+   - `.github/workflows/deploy.yml`ファイルが存在することを確認
+
+4. **初回デプロイ**
+   - mainブランチにプッシュすると自動デプロイが開始されます
+   - 「Actions」タブでデプロイ状況を監視できます
+
+> **注意**: GitHub Actionsに設定変更しないと、自動デプロイが機能しません。従来の「Deploy from a branch」設定では、このプロジェクトのワークフローは動作しません。
 
 ## 📱 PWA対応
 
