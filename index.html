@@ -20,6 +20,7 @@
             <div class="tab-navigation">
                 <button class="tab-btn active" data-tab="resize">🔄 リサイズ</button>
                 <button class="tab-btn" data-tab="convert">🔄 形式変換</button>
+                <button class="tab-btn" data-tab="background">✂️ 背景除去</button>
             </div>
 
             <!-- 共通アップロードセクション -->
@@ -115,6 +116,56 @@
                     </div>
                 </div>
             </div>
+
+            <!-- 背景除去タブコンテンツ -->
+            <div class="tab-content" id="backgroundTab">
+                <div class="controls-section" id="backgroundControlsSection" style="display: none;">
+                    <div class="original-info">
+                        <h3>元の画像</h3>
+                        <div class="image-info" id="backgroundOriginalInfo"></div>
+                        <canvas id="backgroundOriginalCanvas" class="preview-canvas"></canvas>
+                    </div>
+
+                    <div class="background-controls">
+                        <h3>背景除去設定</h3>
+                        <div class="control-group">
+                            <p class="help-text">
+                                ✨ AI技術で人物の背景を自動除去します<br>
+                                📸 人物が写った写真で最適に動作します
+                            </p>
+                            <button id="processBackgroundBtn" class="process-btn">🚀 背景除去を実行</button>
+                            <div id="processingStatus" class="processing-status" style="display: none;">
+                                <div class="spinner"></div>
+                                <span>AI処理中...</span>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label for="backgroundMode">背景設定:</label>
+                            <select id="backgroundMode">
+                                <option value="transparent">透明</option>
+                                <option value="color">単色</option>
+                                <option value="blur">元画像ぼかし</option>
+                            </select>
+                        </div>
+                        <div class="control-group" id="backgroundColorGroup" style="display: none;">
+                            <label for="newBackgroundColor">背景色:</label>
+                            <input type="color" id="newBackgroundColor" value="#ffffff">
+                        </div>
+                        <div class="control-group" id="blurIntensityGroup" style="display: none;">
+                            <label for="blurIntensity">ぼかしの強さ:</label>
+                            <input type="range" id="blurIntensity" min="1" max="20" value="10">
+                            <span id="blurIntensityValue">10px</span>
+                        </div>
+                    </div>
+
+                    <div class="preview-section">
+                        <h3>プレビュー</h3>
+                        <div class="image-info" id="backgroundPreviewInfo"></div>
+                        <canvas id="backgroundPreviewCanvas" class="preview-canvas"></canvas>
+                        <button id="backgroundDownloadBtn" class="download-btn" style="display: none;">📥 ダウンロード</button>
+                    </div>
+                </div>
+            </div>
         </main>
 
         <footer class="footer">
@@ -122,6 +173,10 @@
         </footer>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation@0.1.1675465747/selfie_segmentation.js" crossorigin="anonymous"></script>
     <script src="script.js"></script>
 </body>
 </html> 
