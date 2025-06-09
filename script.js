@@ -8,15 +8,24 @@ class ImageProcessor {
         this.resizePreviewCanvas = document.getElementById('resizePreviewCanvas');
         this.convertOriginalCanvas = document.getElementById('convertOriginalCanvas');
         this.convertPreviewCanvas = document.getElementById('convertPreviewCanvas');
+        this.backgroundOriginalCanvas = document.getElementById('backgroundOriginalCanvas');
+        this.backgroundPreviewCanvas = document.getElementById('backgroundPreviewCanvas');
         
         // コンテキスト
         this.resizeOriginalCtx = this.resizeOriginalCanvas.getContext('2d');
         this.resizePreviewCtx = this.resizePreviewCanvas.getContext('2d');
         this.convertOriginalCtx = this.convertOriginalCanvas.getContext('2d');
         this.convertPreviewCtx = this.convertPreviewCanvas.getContext('2d');
+        this.backgroundOriginalCtx = this.backgroundOriginalCanvas.getContext('2d');
+        this.backgroundPreviewCtx = this.backgroundPreviewCanvas.getContext('2d');
         
-        this.initializeEventListeners();
+        // MediaPipe関連
+        this.selfieSegmentation = null;
+        this.segmentationResults = null;
+        
+        // 初期タブ状態を即座に設定
         this.initializeTabsFromURL();
+        this.initializeEventListeners();
     }
 
     initializeEventListeners() {
@@ -82,20 +91,40 @@ class ImageProcessor {
         });
         backgroundColorPicker.addEventListener('change', () => this.updateConvertPreview());
 
+        // 背景除去コントロール
+        const processBackgroundBtn = document.getElementById('processBackgroundBtn');
+        const backgroundMode = document.getElementById('backgroundMode');
+        const newBackgroundColor = document.getElementById('newBackgroundColor');
+        const blurIntensity = document.getElementById('blurIntensity');
+        const blurIntensityValue = document.getElementById('blurIntensityValue');
+
+        processBackgroundBtn.addEventListener('click', () => this.processBackgroundRemoval());
+        backgroundMode.addEventListener('change', () => this.handleBackgroundModeChange());
+        newBackgroundColor.addEventListener('change', () => this.updateBackgroundPreview());
+        blurIntensity.addEventListener('input', () => {
+            blurIntensityValue.textContent = `${blurIntensity.value}px`;
+            this.updateBackgroundPreview();
+        });
+
         // ダウンロードボタン
         document.getElementById('resizeDownloadBtn').addEventListener('click', () => this.downloadResizedImage());
         document.getElementById('convertDownloadBtn').addEventListener('click', () => this.downloadConvertedImage());
+        document.getElementById('backgroundDownloadBtn').addEventListener('click', () => this.downloadBackgroundRemovedImage());
     }
 
     initializeTabsFromURL() {
         const urlParams = new URLSearchParams(window.location.search);
         const tab = urlParams.get('tab');
-        if (tab && (tab === 'resize' || tab === 'convert')) {
-            this.switchTab(tab);
-        }
+        
+        // URLにタブパラメータがある場合はそれを使用、なければデフォルトでresizeタブ
+        const targetTab = (tab && (tab === 'resize' || tab === 'convert' || tab === 'background')) ? tab : 'resize';
+        
+        // 即座にタブ状態を設定（アニメーションなし）
+        this.setTabState(targetTab);
+        this.currentTab = targetTab;
     }
 
-    switchTab(tabName) {
+    setTabState(tabName) {
         // タブボタンの状態更新
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.classList.remove('active');
@@ -108,8 +137,117 @@ class ImageProcessor {
         document.querySelectorAll('.tab-content').forEach(content => {
             content.classList.remove('active');
         });
-        document.getElementById(tabName + 'Tab').classList.add('active');
+        
+        const targetContent = document.getElementById(tabName + 'Tab');
+        if (targetContent) {
+            targetContent.classList.add('active');
+        }
+    }
 
+    async initializeMediaPipe() {
+        if (this.selfieSegmentation) {
+            return; // 既に初期化済み
+        }
+
+        try {
+            // MediaPipeライブラリの読み込み確認
+            if (typeof SelfieSegmentation === 'undefined') {
+                console.log('MediaPipeライブラリの読み込み待機中...');
+                try {
+                    await this.waitForMediaPipe();
+                } catch (waitError) {
+                    console.error('MediaPipe待機エラー:', waitError);
+                    throw new Error('MediaPipeライブラリが読み込まれませんでした。ページを再読み込みしてください。');
+                }
+            }
+
+            console.log('MediaPipe Selfie Segmentation初期化開始...');
+            
+            this.selfieSegmentation = new SelfieSegmentation({
+                locateFile: (file) => {
+                    return `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation@0.1.1675465747/${file}`;
+                }
+            });
+
+            this.selfieSegmentation.setOptions({
+                modelSelection: 1, // より精度の高いモデル
+            });
+
+            this.selfieSegmentation.onResults((results) => {
+                console.log('セグメンテーション結果を受信:', results);
+                console.log('結果オブジェクトのキー:', Object.keys(results));
+                console.log('segmentationMask:', results.segmentationMask);
+                
+                // セグメンテーションマスクの存在確認
+                if (results.segmentationMask) {
+                    console.log('マスクの詳細:', {
+                        width: results.segmentationMask.width,
+                        height: results.segmentationMask.height,
+                        constructor: results.segmentationMask.constructor.name
+                    });
+                    this.segmentationResults = results;
+                    this.hideProcessingStatus();
+                    this.updateBackgroundPreview();
+                } else {
+                    console.error('セグメンテーションマスクが見つかりません');
+                    console.error('利用可能なプロパティ:', Object.keys(results));
+                    this.hideProcessingStatus();
+                    alert('セグメンテーション処理に失敗しました。別の画像を試してください。');
+                }
+            });
+
+            console.log('MediaPipe Selfie Segmentation初期化完了');
+            return true;
+        } catch (error) {
+            console.error('MediaPipe初期化エラー:', error);
+            alert('背景除去機能の初期化に失敗しました。ページを再読み込みしてお試しください。');
+            return false;
+        }
+    }
+
+    waitForMediaPipe() {
+        return new Promise((resolve, reject) => {
+            let attempts = 0;
+            const maxAttempts = 50; // 5秒間待機
+            
+            const checkInterval = setInterval(() => {
+                attempts++;
+                console.log(`MediaPipe読み込み確認中... (${attempts}/${maxAttempts})`);
+                
+                if (typeof SelfieSegmentation !== 'undefined') {
+                    console.log('MediaPipeライブラリが利用可能になりました');
+                    clearInterval(checkInterval);
+                    resolve();
+                } else if (attempts >= maxAttempts) {
+                    console.error('MediaPipeライブラリの読み込みがタイムアウトしました');
+                    clearInterval(checkInterval);
+                    reject(new Error('MediaPipeライブラリの読み込みに失敗しました'));
+                }
+            }, 100);
+        });
+    }
+
+    showProcessingStatus() {
+        const processBtn = document.getElementById('processBackgroundBtn');
+        const processingStatus = document.getElementById('processingStatus');
+        
+        processBtn.disabled = true;
+        processBtn.textContent = '処理中...';
+        processingStatus.style.display = 'flex';
+    }
+
+    hideProcessingStatus() {
+        const processBtn = document.getElementById('processBackgroundBtn');
+        const processingStatus = document.getElementById('processingStatus');
+        
+        processBtn.disabled = false;
+        processBtn.textContent = '🚀 背景除去を実行';
+        processingStatus.style.display = 'none';
+    }
+
+    switchTab(tabName) {
+        // タブ状態を設定
+        this.setTabState(tabName);
         this.currentTab = tabName;
 
         // URLクエリパラメータを更新
@@ -124,6 +262,8 @@ class ImageProcessor {
                 this.updateResizePreview();
             } else if (tabName === 'convert') {
                 this.updateConvertPreview();
+            } else if (tabName === 'background') {
+                this.initializeMediaPipe();
             }
         }
     }
@@ -190,6 +330,21 @@ class ImageProcessor {
                 <strong>サイズ:</strong> ${this.originalImage.width} × ${this.originalImage.height} px<br>
                 <strong>縦横比:</strong> ${(this.originalImage.width / this.originalImage.height).toFixed(2)}
             `;
+        } else if (this.currentTab === 'background') {
+            this.backgroundOriginalCanvas.width = this.originalImage.width * ratio;
+            this.backgroundOriginalCanvas.height = this.originalImage.height * ratio;
+            
+            this.backgroundOriginalCtx.drawImage(
+                this.originalImage,
+                0, 0,
+                this.backgroundOriginalCanvas.width,
+                this.backgroundOriginalCanvas.height
+            );
+
+            document.getElementById('backgroundOriginalInfo').innerHTML = `
+                <strong>サイズ:</strong> ${this.originalImage.width} × ${this.originalImage.height} px<br>
+                <strong>縦横比:</strong> ${(this.originalImage.width / this.originalImage.height).toFixed(2)}
+            `;
         }
     }
 
@@ -205,6 +360,8 @@ class ImageProcessor {
             this.updateResizePreview();
         } else if (this.currentTab === 'convert') {
             this.updateConvertPreview();
+        } else if (this.currentTab === 'background') {
+            this.initializeMediaPipe();
         }
     }
 
@@ -213,6 +370,8 @@ class ImageProcessor {
             document.getElementById('resizeControlsSection').style.display = 'block';
         } else if (this.currentTab === 'convert') {
             document.getElementById('convertControlsSection').style.display = 'block';
+        } else if (this.currentTab === 'background') {
+            document.getElementById('backgroundControlsSection').style.display = 'block';
         }
     }
 
@@ -400,12 +559,269 @@ class ImageProcessor {
         link.click();
         document.body.removeChild(link);
     }
+
+    async processBackgroundRemoval() {
+        if (!this.originalImage) {
+            alert('画像をアップロードしてください。');
+            return;
+        }
+
+        try {
+            // MediaPipeの初期化確認
+            if (!this.selfieSegmentation) {
+                console.log('MediaPipeを初期化します...');
+                this.showProcessingStatus();
+                const success = await this.initializeMediaPipe();
+                if (!success) {
+                    this.hideProcessingStatus();
+                    return;
+                }
+            }
+
+            console.log('背景除去処理を開始...');
+            this.showProcessingStatus();
+
+            console.log('MediaPipeに画像を送信...');
+            // 公式ドキュメントに従い、元画像を直接送信
+            await this.selfieSegmentation.send({ image: this.originalImage });
+
+        } catch (error) {
+            console.error('背景除去エラー:', error);
+            alert('背景除去に失敗しました: ' + error.message);
+            this.hideProcessingStatus();
+        }
+    }
+
+    handleBackgroundModeChange() {
+        const backgroundMode = document.getElementById('backgroundMode');
+        const backgroundColorGroup = document.getElementById('backgroundColorGroup');
+        const blurIntensityGroup = document.getElementById('blurIntensityGroup');
+
+        // 背景設定UIの表示切り替え
+        if (backgroundMode.value === 'color') {
+            backgroundColorGroup.style.display = 'block';
+            blurIntensityGroup.style.display = 'none';
+        } else if (backgroundMode.value === 'blur') {
+            backgroundColorGroup.style.display = 'none';
+            blurIntensityGroup.style.display = 'block';
+        } else {
+            backgroundColorGroup.style.display = 'none';
+            blurIntensityGroup.style.display = 'none';
+        }
+
+        // プレビューを更新
+        if (this.segmentationResults) {
+            this.updateBackgroundPreview();
+        }
+    }
+
+    updateBackgroundPreview() {
+        console.log('updateBackgroundPreview呼び出し');
+        console.log('segmentationResults:', this.segmentationResults);
+        console.log('originalImage:', this.originalImage);
+        
+        if (!this.segmentationResults || !this.originalImage) {
+            console.log('セグメンテーション結果または元画像がありません');
+            return;
+        }
+
+        const backgroundMode = document.getElementById('backgroundMode');
+        const newBackgroundColor = document.getElementById('newBackgroundColor');
+        const blurIntensity = document.getElementById('blurIntensity');
+
+        console.log('背景設定:', {
+            mode: backgroundMode.value,
+            color: newBackgroundColor.value,
+            blur: blurIntensity.value
+        });
+
+        // プレビューキャンバスを元のサイズに設定
+        this.backgroundPreviewCanvas.width = this.originalImage.width;
+        this.backgroundPreviewCanvas.height = this.originalImage.height;
+        
+        console.log('キャンバスサイズ設定:', this.backgroundPreviewCanvas.width, 'x', this.backgroundPreviewCanvas.height);
+
+        // セグメンテーションマスクを取得
+        const segmentationMask = this.segmentationResults.segmentationMask;
+        console.log('セグメンテーションマスク:', segmentationMask);
+        console.log('マスクのタイプ:', typeof segmentationMask);
+        console.log('マスクのコンストラクタ:', segmentationMask?.constructor?.name);
+        
+        if (!segmentationMask) {
+            console.error('セグメンテーションマスクが無効です - マスクが存在しません');
+            alert('セグメンテーション処理でエラーが発生しました。');
+            return;
+        }
+        
+        // HTMLImageElement、HTMLCanvasElement、ImageData等の可能性を確認
+        console.log('マスクのプロパティ:', Object.getOwnPropertyNames(segmentationMask));
+        if (segmentationMask.width) {
+            console.log('マスクサイズ:', segmentationMask.width, 'x', segmentationMask.height);
+        }
+        
+        // 背景を描画
+        console.log('背景描画開始...');
+        this.drawBackground(backgroundMode.value, newBackgroundColor.value, parseInt(blurIntensity.value));
+        
+        // マスクを適用して前景を描画
+        console.log('マスク適用開始...');
+        this.applySegmentationMask(segmentationMask);
+
+        // プレビュー情報を更新
+        document.getElementById('backgroundPreviewInfo').innerHTML = `
+            <strong>サイズ:</strong> ${this.originalImage.width} × ${this.originalImage.height} px<br>
+            <strong>背景:</strong> ${this.getBackgroundModeText(backgroundMode.value)}<br>
+            <strong>処理:</strong> 完了
+        `;
+
+        // ダウンロードボタンを表示
+        document.getElementById('backgroundDownloadBtn').style.display = 'block';
+        console.log('背景除去プレビュー更新完了');
+    }
+
+    drawBackground(mode, color, blurValue) {
+        this.backgroundPreviewCtx.clearRect(0, 0, this.backgroundPreviewCanvas.width, this.backgroundPreviewCanvas.height);
+
+        if (mode === 'transparent') {
+            // 透明背景（何もしない）
+            return;
+        } else if (mode === 'color') {
+            // 単色背景
+            this.backgroundPreviewCtx.fillStyle = color;
+            this.backgroundPreviewCtx.fillRect(0, 0, this.backgroundPreviewCanvas.width, this.backgroundPreviewCanvas.height);
+        } else if (mode === 'blur') {
+            // ぼかし背景
+            this.backgroundPreviewCtx.filter = `blur(${blurValue}px)`;
+            this.backgroundPreviewCtx.drawImage(
+                this.originalImage,
+                0, 0,
+                this.backgroundPreviewCanvas.width,
+                this.backgroundPreviewCanvas.height
+            );
+            this.backgroundPreviewCtx.filter = 'none';
+        }
+    }
+
+    applySegmentationMask(segmentationMask) {
+        console.log('セグメンテーションマスクを適用中...', segmentationMask);
+        
+        const width = this.backgroundPreviewCanvas.width;
+        const height = this.backgroundPreviewCanvas.height;
+        
+        try {
+            // 一時キャンバスでマスクを処理
+            const maskCanvas = document.createElement('canvas');
+            maskCanvas.width = width;
+            maskCanvas.height = height;
+            const maskCtx = maskCanvas.getContext('2d');
+            
+            // セグメンテーションマスクを描画
+            // マスクがHTMLImageElement、HTMLCanvasElement、ImageDataなどの場合に対応
+            console.log('マスクを描画中...');
+            maskCtx.drawImage(segmentationMask, 0, 0, width, height);
+            
+            // 前景画像（元画像）を描画
+            const foregroundCanvas = document.createElement('canvas');
+            foregroundCanvas.width = width;
+            foregroundCanvas.height = height;
+            const foregroundCtx = foregroundCanvas.getContext('2d');
+            foregroundCtx.drawImage(this.originalImage, 0, 0, width, height);
+            
+            // マスクを適用して前景のみを残す
+            console.log('マスクを適用中...');
+            foregroundCtx.globalCompositeOperation = 'destination-in';
+            foregroundCtx.drawImage(maskCanvas, 0, 0);
+            
+            // 背景の描画設定をリセット
+            this.backgroundPreviewCtx.globalCompositeOperation = 'source-over';
+            
+            // 前景を描画
+            console.log('前景を合成中...');
+            this.backgroundPreviewCtx.drawImage(foregroundCanvas, 0, 0);
+            
+            console.log('セグメンテーション適用完了');
+            
+        } catch (error) {
+            console.error('マスク適用エラー:', error);
+            console.error('マスクの詳細:', {
+                type: typeof segmentationMask,
+                constructor: segmentationMask?.constructor?.name,
+                width: segmentationMask?.width,
+                height: segmentationMask?.height
+            });
+            
+            // フォールバック：マスクなしで元画像をそのまま表示
+            this.backgroundPreviewCtx.drawImage(this.originalImage, 0, 0, width, height);
+            alert('背景除去の適用でエラーが発生しました。元画像を表示しています。');
+        }
+    }
+
+    getBackgroundModeText(mode) {
+        switch (mode) {
+            case 'transparent': return '透明';
+            case 'color': return '単色';
+            case 'blur': return 'ぼかし';
+            default: return mode;
+        }
+    }
+
+    downloadBackgroundRemovedImage() {
+        if (!this.segmentationResults) {
+            alert('背景除去を実行してからダウンロードしてください。');
+            return;
+        }
+
+        const backgroundMode = document.getElementById('backgroundMode');
+        const dataURL = this.backgroundPreviewCanvas.toDataURL('image/png');
+        
+        const link = document.createElement('a');
+        link.download = `background_removed_${this.originalImage.width}x${this.originalImage.height}.png`;
+        link.href = dataURL;
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+}
+
+// CSSの読み込み完了を確認してからアプリケーションを初期化
+function waitForStyles() {
+    return new Promise((resolve) => {
+        // CSSが存在するかチェック
+        const link = document.querySelector('link[href="styles.css"]');
+        if (!link) {
+            resolve();
+            return;
+        }
+
+        // CSSファイルが完全に読み込まれているかチェック
+        if (link.sheet && link.sheet.cssRules) {
+            resolve();
+        } else {
+            link.addEventListener('load', resolve);
+            // タイムアウト設定（3秒）
+            setTimeout(resolve, 3000);
+        }
+    });
+}
+
+// アプリケーション初期化
+async function initializeImageProcessor() {
+    // CSSの読み込み完了を待つ
+    await waitForStyles();
+    
+    // 少し待機してからImageProcessorを初期化
+    setTimeout(() => {
+        new ImageProcessor();
+    }, 100);
 }
 
 // アプリケーションの初期化
-document.addEventListener('DOMContentLoaded', () => {
-    new ImageProcessor();
-});
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeImageProcessor);
+} else {
+    initializeImageProcessor();
+}
 
 // PWA対応（Service Worker）
 if ('serviceWorker' in navigator) {

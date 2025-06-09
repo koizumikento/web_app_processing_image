@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>画像リサイズツール</title>
+    <title>ブラウザ動作する画像処理ツール</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#667eea">
@@ -11,15 +11,16 @@
 <body>
     <div class="container">
         <header class="header">
-            <h1>🖼️ 画像リサイズツール</h1>
-            <p>ブラウザ上で簡単に画像をリサイズできます</p>
+            <h1>🖼️ ブラウザ動作する画像処理ツール</h1>
+            <p>ブラウザ上で画像のリサイズ・形式変換・AI背景除去が可能</p>
         </header>
 
         <main class="main">
             <!-- タブナビゲーション -->
             <div class="tab-navigation">
-                <button class="tab-btn active" data-tab="resize">🔄 リサイズ</button>
+                <button class="tab-btn" data-tab="resize">🔄 リサイズ</button>
                 <button class="tab-btn" data-tab="convert">🔄 形式変換</button>
+                <button class="tab-btn" data-tab="background">✂️ 背景除去</button>
             </div>
 
             <!-- 共通アップロードセクション -->
@@ -39,7 +40,7 @@
             </div>
 
             <!-- リサイズタブコンテンツ -->
-            <div class="tab-content active" id="resizeTab">
+            <div class="tab-content" id="resizeTab">
                 <div class="controls-section" id="resizeControlsSection" style="display: none;">
                     <div class="original-info">
                         <h3>元の画像</h3>
@@ -115,13 +116,84 @@
                     </div>
                 </div>
             </div>
+
+            <!-- 背景除去タブコンテンツ -->
+            <div class="tab-content" id="backgroundTab">
+                <div class="controls-section" id="backgroundControlsSection" style="display: none;">
+                    <div class="original-info">
+                        <h3>元の画像</h3>
+                        <div class="image-info" id="backgroundOriginalInfo"></div>
+                        <canvas id="backgroundOriginalCanvas" class="preview-canvas"></canvas>
+                    </div>
+
+                    <div class="background-controls">
+                        <h3>背景除去設定</h3>
+                        <div class="control-group">
+                            <p class="help-text">
+                                ✨ AI技術で人物の背景を自動除去します<br>
+                                📸 人物が写った写真で最適に動作します
+                            </p>
+                            <button id="processBackgroundBtn" class="process-btn">🚀 背景除去を実行</button>
+                            <div id="processingStatus" class="processing-status" style="display: none;">
+                                <div class="spinner"></div>
+                                <span>AI処理中...</span>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label for="backgroundMode">背景設定:</label>
+                            <select id="backgroundMode">
+                                <option value="transparent">透明</option>
+                                <option value="color">単色</option>
+                                <option value="blur">元画像ぼかし</option>
+                            </select>
+                        </div>
+                        <div class="control-group" id="backgroundColorGroup" style="display: none;">
+                            <label for="newBackgroundColor">背景色:</label>
+                            <input type="color" id="newBackgroundColor" value="#ffffff">
+                        </div>
+                        <div class="control-group" id="blurIntensityGroup" style="display: none;">
+                            <label for="blurIntensity">ぼかしの強さ:</label>
+                            <input type="range" id="blurIntensity" min="1" max="20" value="10">
+                            <span id="blurIntensityValue">10px</span>
+                        </div>
+                    </div>
+
+                    <div class="preview-section">
+                        <h3>プレビュー</h3>
+                        <div class="image-info" id="backgroundPreviewInfo"></div>
+                        <canvas id="backgroundPreviewCanvas" class="preview-canvas"></canvas>
+                        <button id="backgroundDownloadBtn" class="download-btn" style="display: none;">📥 ダウンロード</button>
+                    </div>
+                </div>
+            </div>
         </main>
 
         <footer class="footer">
-            <p>&copy; 2024 画像リサイズツール - すべての処理はブラウザ内で完結します</p>
+            <p>&copy; 2024 ブラウザ動作する画像処理ツール - すべての処理はブラウザ内で完結します</p>
         </footer>
     </div>
 
-    <script src="script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation@0.1.1675465747/selfie_segmentation.js" crossorigin="anonymous"></script>
+    <script>
+        // CSSが完全に読み込まれるまで待機
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                // さらにCSSの読み込みを待機
+                window.addEventListener('load', initializeApp);
+            });
+        } else {
+            window.addEventListener('load', initializeApp);
+        }
+
+        function initializeApp() {
+            // CSSが確実に適用された後でJavaScriptを読み込み
+            const script = document.createElement('script');
+            script.src = 'script.js';
+            document.head.appendChild(script);
+        }
+    </script>
 </body>
 </html> 
