@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>画像リサイズツール</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#667eea">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🖼️ 画像リサイズツール</h1>
+            <p>ブラウザ上で簡単に画像をリサイズできます</p>
+        </header>
+
+        <main class="main">
+            <!-- タブナビゲーション -->
+            <div class="tab-navigation">
+                <button class="tab-btn active" data-tab="resize">🔄 リサイズ</button>
+                <button class="tab-btn" data-tab="convert">🔄 形式変換</button>
+            </div>
+
+            <!-- 共通アップロードセクション -->
+            <div class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-content">
+                        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17,8 12,3 7,8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                        <p>画像をドラッグ＆ドロップするか、クリックして選択</p>
+                        <p class="upload-hint">JPEG、PNG、WebP形式に対応</p>
+                    </div>
+                    <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                </div>
+            </div>
+
+            <!-- リサイズタブコンテンツ -->
+            <div class="tab-content active" id="resizeTab">
+                <div class="controls-section" id="resizeControlsSection" style="display: none;">
+                    <div class="original-info">
+                        <h3>元の画像</h3>
+                        <div class="image-info" id="originalInfo"></div>
+                        <canvas id="originalCanvas" class="preview-canvas"></canvas>
+                    </div>
+
+                    <div class="resize-controls">
+                        <h3>リサイズ設定</h3>
+                        <div class="control-group">
+                            <label for="widthInput">幅 (px):</label>
+                            <input type="number" id="widthInput" min="1" max="4000">
+                        </div>
+                        <div class="control-group">
+                            <label for="heightInput">高さ (px):</label>
+                            <input type="number" id="heightInput" min="1" max="4000">
+                        </div>
+                        <div class="control-group">
+                            <input type="checkbox" id="maintainRatio" checked>
+                            <label for="maintainRatio">縦横比を維持</label>
+                        </div>
+                        <div class="control-group">
+                            <label for="resizeQualitySlider">品質:</label>
+                            <input type="range" id="resizeQualitySlider" min="0.1" max="1" step="0.1" value="0.8">
+                            <span id="resizeQualityValue">80%</span>
+                        </div>
+                    </div>
+
+                    <div class="preview-section">
+                        <h3>プレビュー</h3>
+                        <div class="image-info" id="resizePreviewInfo"></div>
+                        <canvas id="resizePreviewCanvas" class="preview-canvas"></canvas>
+                        <button id="resizeDownloadBtn" class="download-btn">📥 ダウンロード</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 形式変換タブコンテンツ -->
+            <div class="tab-content" id="convertTab">
+                <div class="controls-section" id="convertControlsSection" style="display: none;">
+                    <div class="original-info">
+                        <h3>元の画像</h3>
+                        <div class="image-info" id="convertOriginalInfo"></div>
+                        <canvas id="convertOriginalCanvas" class="preview-canvas"></canvas>
+                    </div>
+
+                    <div class="convert-controls">
+                        <h3>形式変換設定</h3>
+                        <div class="control-group">
+                            <label for="outputFormat">出力形式:</label>
+                            <select id="outputFormat">
+                                <option value="jpeg">JPEG</option>
+                                <option value="png">PNG</option>
+                                <option value="webp">WebP</option>
+                            </select>
+                        </div>
+                        <div class="control-group" id="convertQualityGroup">
+                            <label for="convertQualitySlider">品質:</label>
+                            <input type="range" id="convertQualitySlider" min="0.1" max="1" step="0.1" value="0.9">
+                            <span id="convertQualityValue">90%</span>
+                        </div>
+                        <div class="control-group">
+                            <label for="backgroundColorPicker">背景色 (PNG→JPEG時):</label>
+                            <input type="color" id="backgroundColorPicker" value="#ffffff">
+                        </div>
+                    </div>
+
+                    <div class="preview-section">
+                        <h3>プレビュー</h3>
+                        <div class="image-info" id="convertPreviewInfo"></div>
+                        <canvas id="convertPreviewCanvas" class="preview-canvas"></canvas>
+                        <button id="convertDownloadBtn" class="download-btn">📥 ダウンロード</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2024 画像リサイズツール - すべての処理はブラウザ内で完結します</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 

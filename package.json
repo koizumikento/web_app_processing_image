@@ -1,0 +1,38 @@
+{
+  "name": "image-resizer-web-app",
+  "version": "1.0.0",
+  "description": "ブラウザで動作する画像リサイズWebアプリケーション",
+  "main": "index.html",
+  "scripts": {
+    "build": "npm run copy-files",
+    "copy-files": "mkdir -p dist && cp -r *.html *.css *.js *.json service-worker.js dist/",
+    "dev": "npx live-server --port=3000 --open=/index.html",
+    "lint": "npx eslint *.js",
+    "lint:fix": "npx eslint *.js --fix",
+    "test": "echo \"Tests will be added in future versions\" && exit 0",
+    "validate-html": "npx html5validator --root ./ --ignore='dist/'"
+  },
+  "keywords": [
+    "image",
+    "resize",
+    "web-app",
+    "pwa",
+    "javascript",
+    "canvas"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "html5validator": "^0.5.2",
+    "live-server": "^1.2.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/image-resizer-web-app.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/image-resizer-web-app/issues"
+  },
+  "homepage": "https://yourusername.github.io/image-resizer-web-app/"
+} 
