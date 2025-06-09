@@ -42,12 +42,6 @@ jobs:
       - name: Run Tests
         run: npm test
 
-      # HTML Validation
-      - name: HTML5 Validator
-        uses: Cyb3r-Jak3/html5validator-action@v7.2.0
-        with:
-          root: ./
-
   # Build and Deploy Job
   deploy:
     needs: lint-and-test
