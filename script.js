@@ -485,19 +485,19 @@ class ImageProcessor {
 
     getMimeType(format) {
         switch (format) {
-            case 'jpeg': return 'image/jpeg';
-            case 'png': return 'image/png';
-            case 'webp': return 'image/webp';
-            default: return 'image/jpeg';
+        case 'jpeg': return 'image/jpeg';
+        case 'png': return 'image/png';
+        case 'webp': return 'image/webp';
+        default: return 'image/jpeg';
         }
     }
 
     getFileExtension(format) {
         switch (format) {
-            case 'jpeg': return 'jpg';
-            case 'png': return 'png';
-            case 'webp': return 'webp';
-            default: return 'jpg';
+        case 'jpeg': return 'jpg';
+        case 'png': return 'png';
+        case 'webp': return 'webp';
+        default: return 'jpg';
         }
     }
 
@@ -758,10 +758,10 @@ class ImageProcessor {
 
     getBackgroundModeText(mode) {
         switch (mode) {
-            case 'transparent': return '透明';
-            case 'color': return '単色';
-            case 'blur': return 'ぼかし';
-            default: return mode;
+        case 'transparent': return '透明';
+        case 'color': return '単色';
+        case 'blur': return 'ぼかし';
+        default: return mode;
         }
     }
 
@@ -771,7 +771,6 @@ class ImageProcessor {
             return;
         }
 
-        const backgroundMode = document.getElementById('backgroundMode');
         const dataURL = this.backgroundPreviewCanvas.toDataURL('image/png');
         
         const link = document.createElement('a');

@@ -20,6 +20,7 @@
     "no-var": "error"
   },
   "globals": {
-    "self": "readonly"
+    "self": "readonly",
+    "SelfieSegmentation": "readonly"
   }
 } 
